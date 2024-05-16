@@ -23,16 +23,19 @@
 
 function [Xpdc, Ypdc, driftX, driftY] = IntersectionMax(XList,YList,refXList,refYList,fID,trackNUM,trackInterval,imW,IntersectD)
 
+% transfer the 2D position to 1D (x+y*imW)
 pList = round(YList/IntersectD)*imW/IntersectD + round(XList/IntersectD);
 refList = round(refYList/IntersectD)*imW/IntersectD + round(refXList/IntersectD);
-roiR = 3;
-[Vxy0,Pxy0] = groupcounts(refList);
+roiR = 3; % radius of the local search region
+[Vxy0,Pxy0] = groupcounts(refList);  % sorting of the 1D localization position
 refx = 0;
 refy = 0;
 ROI_size = 2*roiR+1;
 num = 0;
 array_sft = zeros(ROI_size*ROI_size,1);
 array_idx = zeros(ROI_size*ROI_size,1);
+
+% transfer 2D local search region to 1D
 for r = -roiR:roiR
     for c = -roiR:roiR
         num = num + 1;
@@ -45,13 +48,15 @@ array_len = ROI_size*ROI_size;
 driftX = zeros(1,trackNUM);
 driftY = zeros(1,trackNUM);
 for s = 2:trackNUM
-    pList1 = pList((fID>(s-1)*trackInterval)&(fID<=s*trackInterval));
-    [Vxy1,Pxy1] = groupcounts(pList1);
+    pList1 = pList((fID>(s-1)*trackInterval)&(fID<=s*trackInterval)); % extract localization list in each segmented subset 
+    [Vxy1,Pxy1] = groupcounts(pList1); 
 	sft = round(refy) * imW / IntersectD + round(refx);
-	Pxy1 = Pxy1 + sft;
-    % count the number of intersected localizations
-	img_crr = PointIntersect2D(Pxy0, Vxy0, length(Vxy0), Pxy1, Vxy1, length(Vxy1), array_sft, array_idx, array_len, roiR);
+	Pxy1 = Pxy1 + sft; % adaptive coarse drift correction
+    % count the number of intersected localizations, input: reference localization list (Pxy0, Vxy0, length(Vxy0)), target localization list(Pxy1, Vxy1, length(Vxy1)), local search region (rray_sft, array_idx, array_len, roiR)
+	img_crr = PointIntersect2D(Pxy0, Vxy0, length(Vxy0), Pxy1, Vxy1, length(Vxy1), array_sft, array_idx, array_len, roiR); 
 	ROIcc = reshape(img_crr, 2*roiR+1, 2*roiR+1);
+	
+	% estimate the precise sub-pixel position of the peak with a fast FFT based single-molecule localization algorithm 
     fft_values = fft2(ROIcc');
     angX = angle(fft_values(1,2));
     angX=angX-2*pi*(angX>0);
@@ -60,16 +65,19 @@ for s = 2:trackNUM
     angY=angY-2*pi*(angY>0);
     PY = (abs(angY)/(2*pi/ROI_size) + 1) - (ROI_size+1)/2;
    
+	% update the relative drift reference for subsequent segmented subset
     refx = round(refx) + (PX);
     refy = round(refy) + (PY);
     driftX(s) = -(refx);
     driftY(s) = -(refy);    
 end
 
-drift_X = [2*driftX(1)-driftX(2) driftX 2*driftX(end)-driftX(end-1)]*IntersectD;
+
+% spline interpolation 
+drift_X = [2*driftX(1)-driftX(2) driftX 2*driftX(end)-driftX(end-1)]*IntersectD; 
 drift_Y = [2*driftY(1)-driftY(2) driftY 2*driftY(end)-driftY(end-1)]*IntersectD;
 
-driftX = interp1((-0.5:(trackNUM+0.5))*trackInterval,drift_X,1:trackNUM*trackInterval,'spline');
+driftX = interp1((-0.5:(trackNUM+0.5))*trackInterval,drift_X,1:trackNUM*trackInterval,'spline'); 
 driftY = interp1((-0.5:(trackNUM+0.5))*trackInterval,drift_Y,1:trackNUM*trackInterval,'spline');
 
 Xpdc = XList - driftX(fID)';
