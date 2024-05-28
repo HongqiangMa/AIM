@@ -27,9 +27,10 @@ save('simulationSMLM.mat','F','X','Y','Z','driftXT','driftYT','driftZT');
 %% data orgnization
 dimensions = 2;
 
-Localizations(:,1) = F;
-Localizations(:,2) = X;
-Localizations(:,3) = Y;
+%% transfer the unit of localization position to pixels if the original unit is nanometer.
+Localizations(:,1) = F;  % unit: frame
+Localizations(:,2) = X;  % unit: pixel, 100nm/pixel
+Localizations(:,3) = Y;  % unit: pixel, 100nm/pixel
 
 %% AIM drift correction
 trackInterval = 50; % time interval for drift tracking, Unit: frames 
