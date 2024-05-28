@@ -18,8 +18,8 @@ imSize = 2048; % specify the image size in number of pixels, e.g., 2048 x 2048
 render_zoom = 20; % magnification in the final rendered image
 %% Asign the experimental frame number and localization coordinates (x and y) to localizations variable
 Localizations(:,1) = F; %frame_id
-Localizations(:,2) = X; % x position of the localization coordinates
-Localizations(:,3) = Y; % y position of the localization coordinates
+Localizations(:,2) = X; % x position of the localization coordinates, unit: pixels, 100nm/pixel
+Localizations(:,3) = Y; % y position of the localization coordinates, unit: pixels, 100nm/pixel
 
 %% AIM drift correction and parameter settings
 trackInterval = 50; % time interval for drift tracking, Unit: frames 
