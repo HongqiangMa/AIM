@@ -29,7 +29,7 @@ fname = 'simulationSMLM.mat';
 %% data orgnization
 dimensions = 3;
 
-%% transfer the localization position to pixels if the original unit is nanometer.
+%% transfer the unit of localization position to pixels if the original unit is nanometer.
 Localizations(:,1) = F;  % unit: frame
 Localizations(:,2) = X;  % unit: pixel, 100nm/pixel
 Localizations(:,3) = Y;  % unit: pixel, 100nm/pixel
